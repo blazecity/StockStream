@@ -7,7 +7,6 @@ public class PeriodicStockDataLoader extends TimerTask {
 	private String[] tickerList;
 
 	public PeriodicStockDataLoader(StockDataImporter sdi, String[] tickerList) {
-		this.delay = delay;
 		this.sdi = sdi;
 		this.tickerList = tickerList;
 	}
