@@ -1,5 +1,9 @@
 package ch.jbaumann.stockstream.data;
 
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class Main {
 	public static void main(String[] args) {
 		if (args.length == 3) {
@@ -8,7 +12,19 @@ public class Main {
 			String kafkaTopic = args[2];
 			System.out.println(brokerUrl + apiKey + kafkaTopic);
 			StockDataImporter sdi = new StockDataImporter(brokerUrl, apiKey, kafkaTopic);
-			sdi.sendDataToKafka("AAPL");
+			String[] tickerList = {
+				"AMZN",
+				"MSFT",
+				"NEE",
+				"JPM",
+				"MRNA"
+			};
+
+			PeriodicStockDataLoader psdl = new PeriodicStockDataLoader(sdi, tickerList);
+			Timer timer = new Timer(true);
+			timer.scheduleAtFixedRate(psdl, 0, 900_000);
 		}
+
+
 	}
 }
