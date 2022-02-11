@@ -20,12 +20,11 @@ public class Main {
 				"JPM",
 				"MRNA"
 			};
+			System.out.println("sdfasdfasf");
 
 			ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 			PeriodicStockDataLoader psdl = new PeriodicStockDataLoader(sdi, tickerList);
 			executor.scheduleWithFixedDelay(psdl, 0, period, TimeUnit.MINUTES);
 		}
-
-
 	}
 }

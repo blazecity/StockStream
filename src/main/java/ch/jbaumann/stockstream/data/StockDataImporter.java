@@ -68,6 +68,9 @@ public class StockDataImporter {
 			String key = stringBuilder.append(ticker).append(":").append(time).toString();
 			ProducerRecord<String, String> priceRecord = new ProducerRecord<>(this.kafkaTopic, key, modifiedPayload);
 
+			System.out.println("\nPayload");
+			System.out.println(modifiedPayload + "\n");
+
 			this.kafkaProducer.send(priceRecord);
 			System.out.println(stringBuilder.append("=> Sent price data of ").append(ticker).append(" from time ").append(time));
 			System.out.println("==============================================");
