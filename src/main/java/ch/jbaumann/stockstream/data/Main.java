@@ -1,15 +1,16 @@
 package ch.jbaumann.stockstream.data;
 
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 	public static void main(String[] args) {
-		if (args.length == 3) {
+		if (args.length == 4) {
 			String brokerUrl = args[0];
 			String apiKey = args[1];
 			String kafkaTopic = args[2];
+			int period = Integer.parseInt(args[3]);
 			System.out.println(brokerUrl + apiKey + kafkaTopic);
 			StockDataImporter sdi = new StockDataImporter(brokerUrl, apiKey, kafkaTopic);
 			String[] tickerList = {
@@ -20,9 +21,9 @@ public class Main {
 				"MRNA"
 			};
 
+			ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 			PeriodicStockDataLoader psdl = new PeriodicStockDataLoader(sdi, tickerList);
-			Timer timer = new Timer(true);
-			timer.scheduleAtFixedRate(psdl, 0, 900_000);
+			executor.scheduleWithFixedDelay(psdl, 0, period, TimeUnit.MINUTES);
 		}
 
 

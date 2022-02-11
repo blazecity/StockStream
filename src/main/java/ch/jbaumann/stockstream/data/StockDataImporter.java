@@ -1,5 +1,9 @@
 package ch.jbaumann.stockstream.data;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -18,11 +22,13 @@ public class StockDataImporter {
 	private String brokerUrl;
 	private String kafkaTopic;
 	private Producer<String, String> kafkaProducer;
+	private ObjectMapper objectMapper;
 
 	public StockDataImporter(String brokerUrl, String apiKey, String kafkaTopic) {
 		this.apiKey = apiKey;
 		this.brokerUrl = brokerUrl;
 		this.kafkaTopic = kafkaTopic;
+		this.objectMapper = new ObjectMapper();
 
 		Properties config = new Properties();
 		config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.brokerUrl);
@@ -50,12 +56,26 @@ public class StockDataImporter {
 				.join();
 	}
 
-	private void writeToKafka(String ticker, String payload) {
-		System.out.println("Now writing to Kafka");
-		// key should be ticker + time
-		ProducerRecord<String, String> priceRecord = new ProducerRecord<>(this.kafkaTopic, ticker, payload);
+	private void writeToKafka(final String ticker, final String payload) {
+		System.out.println("\nNow writing to Kafka");
 		StringBuilder stringBuilder = new StringBuilder();
-		this.kafkaProducer.send(priceRecord);
-		System.out.println(stringBuilder.append("Sent price data of ").append(ticker).append(" from time ").append(""));
+
+		try {
+			ObjectNode jsonNode = (ObjectNode) this.objectMapper.readTree(payload);
+			jsonNode.put("ticker", ticker);
+			String time = jsonNode.get("t").toString();
+			String modifiedPayload = this.objectMapper.writeValueAsString(jsonNode);
+			String key = stringBuilder.append(ticker).append(":").append(time).toString();
+			ProducerRecord<String, String> priceRecord = new ProducerRecord<>(this.kafkaTopic, key, modifiedPayload);
+
+			this.kafkaProducer.send(priceRecord);
+			System.out.println(stringBuilder.append("=> Sent price data of ").append(ticker).append(" from time ").append(time));
+			System.out.println("==============================================");
+
+		} catch (JsonProcessingException j) {
+			System.out.println("Unable to process JSON payload.");
+		}
+
+
 	}
 }

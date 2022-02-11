@@ -1,8 +1,6 @@
 package ch.jbaumann.stockstream.data;
 
-import java.util.TimerTask;
-
-public class PeriodicStockDataLoader extends TimerTask {
+public class PeriodicStockDataLoader implements Runnable {
 	private StockDataImporter sdi;
 	private String[] tickerList;
 
@@ -13,6 +11,7 @@ public class PeriodicStockDataLoader extends TimerTask {
 
 	@Override
 	public void run() {
+		System.out.println("=> Now running data load");
 		for (String ticker : tickerList) {
 			sdi.sendDataToKafka(ticker);
 		}
