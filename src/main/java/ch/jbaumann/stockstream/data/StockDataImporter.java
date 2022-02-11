@@ -15,7 +15,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
+import java.util.TimeZone;
 
 public class StockDataImporter {
 	private String apiKey;
@@ -64,6 +71,14 @@ public class StockDataImporter {
 			ObjectNode jsonNode = (ObjectNode) this.objectMapper.readTree(payload);
 			jsonNode.put("ticker", ticker);
 			String time = jsonNode.get("t").toString();
+			long timeInSeconds = Long.parseLong(time);
+
+
+			LocalDateTime timeAsDate = LocalDateTime.ofInstant(Instant.ofEpochSecond(timeInSeconds), TimeZone.getDefault().toZoneId());
+			Timestamp sqlTimestamp = Timestamp.valueOf(timeAsDate);
+			//DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+			// String priceDate = timeAsDate.atOffset(ZoneOffset.UTC).format(dtf);
+			jsonNode.put("price_date", sqlTimestamp.toString());
 			String modifiedPayload = this.objectMapper.writeValueAsString(jsonNode);
 			String key = stringBuilder.append(ticker).append(":").append(time).toString();
 			ProducerRecord<String, String> priceRecord = new ProducerRecord<>(this.kafkaTopic, key, modifiedPayload);
@@ -73,7 +88,7 @@ public class StockDataImporter {
 
 			this.kafkaProducer.send(priceRecord);
 			System.out.println(stringBuilder.append("=> Sent price data of ").append(ticker).append(" from time ").append(time));
-			System.out.println("==============================================");
+			System.out.println("==============================================\n");
 
 		} catch (JsonProcessingException j) {
 			System.out.println("Unable to process JSON payload.");
